@@ -44,65 +44,56 @@ async function createFlagIcon(countryCode) {
 async function geoLookup(ip) {
   if (!ip) return null;
 
-  // helpers
-  const normalize = (data, source) => {
-    if (!data) return null;
+  const clean = (v) =>
+  v && v !== "—" && v !== "undefined" && v !== "null" ? v : null;
 
-    // ipwho.is
-    if (source === "ipwho") {
+  const applyCloudflareFix = (info) => {
+    const org = (info.org || "").toLowerCase();
+
+    if (org.includes("cloudflare")) {
       return {
-        ip: data.ip,
-        country: data.country || "Unknown",
-        countryCode: (data.country_code || "").toLowerCase(),
-        city: data.city || "—",
-        org: data.connection?.isp || data.connection?.org || "—",
-        hostname: data.connection?.domain || "—",
-        lat: data.latitude,
-        lon: data.longitude
+        ...info,
+        country: "United States",
+        countryCode: "us",
+        city: "San Francisco",
+        region: "California",
+        loc: "37.7749,-122.4194"
       };
     }
 
-    // ipinfo.io
-    if (source === "ipinfo") {
-      const [lat, lon] = (data.loc || ",").split(",");
-
-      return {
-        ip: data.ip,
-        country: data.country || "Unknown",
-        countryCode: (data.country || "").toLowerCase(),
-        city: data.city || "—",
-        org: data.org || "—",
-        hostname: data.hostname || "—",
-        lat: parseFloat(lat) || null,
-        lon: parseFloat(lon) || null
-      };
-    }
-
-    return null;
+    return info;
   };
 
-  // 1) try ipwho.is first
-  try {
-    const r1 = await fetch(`https://ipwho.is/${encodeURIComponent(ip)}`);
-    const d1 = await r1.json();
+  const formatGeoJS = (d) => ({
+    ip: d.ip,
+    hostname: null,
+    city: clean(d.city),
+    region: clean(d.region),
+    country: clean(d.country),
+    countryCode: clean(d.country_code),
+    loc:
+    d.latitude && d.longitude
+    ? `${d.latitude},${d.longitude}`
+    : null,
+    org: clean(d.organization),
+    postal: clean(d.postal_code),
+    timezone: clean(d.timezone),
+    anycast: false
+  });
 
-    if (d1?.success) {
-      return normalize(d1, "ipwho");
+  try {
+    const r = await fetch(
+      `https://get.geojs.io/v1/ip/geo/${encodeURIComponent(ip)}.json`
+    );
+    const d = await r.json();
+
+    if (d && d.ip) {
+      let info = formatGeoJS(d);
+      info = applyCloudflareFix(info);
+      return info;
     }
   } catch (e) {
-    console.warn("ipwho failed:", e);
-  }
-
-  // 2) fallback ipinfo.io
-  try {
-    const r2 = await fetch(`https://ipinfo.io/${encodeURIComponent(ip)}/json`);
-    const d2 = await r2.json();
-
-    if (d2?.ip) {
-      return normalize(d2, "ipinfo");
-    }
-  } catch (e) {
-    console.warn("ipinfo failed:", e);
+    console.warn("geojs failed:", e);
   }
 
   return null;
@@ -146,12 +137,14 @@ async function updateTabInfo(tabId, url) {
   const info = await lookupHostname(hostname, tabId);
   if (!info?.countryCode) return;
 
+  // === Установка динамической иконки ===
   const imageDataDict = await createFlagIcon(info.countryCode);
   chrome.action.setIcon({
     tabId: tabId,
     imageData: imageDataDict
   });
 
+  // === Тулуип ===
   const flag = info.countryCode.length === 2
   ? String.fromCodePoint(127397 + info.countryCode.toUpperCase().charCodeAt(0),
                          127397 + info.countryCode.toUpperCase().charCodeAt(1))
