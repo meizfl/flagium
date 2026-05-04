@@ -1,0 +1,11 @@
+Privacy Policy
+
+Flagium does not collect, store, or transmit any personally identifiable information.
+
+The extension temporarily processes only the hostname of the currently active tab to:
+- Resolve its IP address
+- Determine the country of the server
+
+This information is sent to ipinfo.io solely for geolocation purposes. No data is saved or shared with any third parties beyond this necessary lookup.
+
+Last updated: May 2026
