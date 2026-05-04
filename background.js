@@ -102,12 +102,30 @@ async function geoLookup(ip) {
 // ==================== DNS OVER HTTPS ====================
 async function resolveViaDoh(hostname) {
   try {
-    const r = await fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(hostname)}&type=A`, {
-      headers: { "Accept": "application/dns-json" }
-    });
-    const data = await r.json();
-    return data?.Answer?.[0]?.data || null;
-  } catch { return null; }
+    const base = "https://cloudflare-dns.com/dns-query";
+
+    const [aRes, aaaaRes] = await Promise.all([
+      fetch(`${base}?name=${encodeURIComponent(hostname)}&type=A`, {
+        headers: { "Accept": "application/dns-json" }
+      }).then(r => r.json()).catch(() => null),
+
+      fetch(`${base}?name=${encodeURIComponent(hostname)}&type=AAAA`, {
+        headers: { "Accept": "application/dns-json" }
+      }).then(r => r.json()).catch(() => null)
+    ]);
+
+    const ipv4 = aRes?.Answer?.[0]?.data || null;
+    const ipv6 = aaaaRes?.Answer?.[0]?.data || null;
+
+    return {
+      ipv4,
+      ipv6,
+      preferred: ipv6 || ipv4
+    };
+
+  } catch {
+    return null;
+  }
 }
 
 // ==================== LOOKUP ====================
