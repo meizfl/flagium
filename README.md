@@ -4,7 +4,8 @@
 
 Modern alternative to the classic FlagFox extension. Shows the country flag of the website's server in the toolbar.
 
-![Flagium Demo](https://proside.pp.ua/archive/sitecache/flagium.png)
+![Flagium Chromium](https://proside.pp.ua/archive/sitecache/flagium_chromium.png)
+![Flagium Firefox](https://proside.pp.ua/archive/sitecache/flagium_firefox.png)
 
 ### Features
 
