@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flagium</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;700;800&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0e0e12;
+      --surface: #17171f;
+      --border: #2a2a38;
+      --accent: #6c63ff;
+      --accent2: #ff6b6b;
+      --text: #e8e8f0;
+      --muted: #8888aa;
+      --mono: 'JetBrains Mono', monospace;
+      --display: 'Syne', sans-serif;
+    }
+
+    body {
+      width: 320px;
+      min-height: 200px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--display);
+      overflow: hidden;
+    }
+
+    /* Animated gradient background */
+    .bg-glow {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(ellipse at 10% 0%, rgba(108,99,255,0.12) 0%, transparent 60%),
+                  radial-gradient(ellipse at 90% 100%, rgba(255,107,107,0.08) 0%, transparent 60%);
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+
+    header .logo {
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    header h1 {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+
+    header .version {
+      margin-left: auto;
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 5px;
+    }
+
+    .main {
+      padding: 14px 16px;
+      position: relative;
+    }
+
+    /* Big flag display */
+    .flag-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .flag-emoji {
+      font-size: 48px;
+      line-height: 1;
+      filter: drop-shadow(0 4px 12px rgba(108,99,255,0.3));
+      animation: flagIn 0.4s cubic-bezier(.34,1.56,.64,1) both;
+    }
+
+    @keyframes flagIn {
+      from { transform: scale(0.5) rotate(-10deg); opacity: 0; }
+      to   { transform: scale(1) rotate(0deg);   opacity: 1; }
+    }
+
+    .country-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .country-name {
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1.1;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .city-name {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Info cards */
+    .cards {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      transition: border-color 0.2s;
+      cursor: default;
+    }
+
+    .card:hover { border-color: var(--accent); }
+
+    .card-icon {
+      font-size: 14px;
+      width: 20px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .card-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .card-label {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .card-value {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 1px;
+    }
+
+    .card-copy {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 12px;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: color 0.2s, background 0.2s;
+    }
+    .card-copy:hover { color: var(--accent); background: rgba(108,99,255,0.1); }
+    .card-copy.copied { color: #6dffb3; }
+
+    /* Loading state */
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 0;
+      gap: 10px;
+    }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-text {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* Error state */
+    .error {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 16px;
+      gap: 8px;
+      text-align: center;
+    }
+
+    .error-icon { font-size: 32px; }
+    .error-title { font-size: 14px; font-weight: 700; color: var(--accent2); }
+    .error-msg { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+
+    .error-detail {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--accent2);
+      background: rgba(255,107,107,0.07);
+      border: 1px solid rgba(255,107,107,0.2);
+      border-radius: 6px;
+      padding: 8px;
+      margin-top: 6px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      text-align: left;
+      width: 100%;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+
+    /* Country code badge */
+    .cc-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--accent), #9c63ff);
+      color: white;
+      font-family: var(--mono);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-hostname {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 200px;
+    }
+
+    .refresh-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      cursor: pointer;
+      padding: 3px 8px;
+      border-radius: 5px;
+      transition: all 0.2s;
+      font-family: var(--mono);
+      font-size: 9px;
+    }
+    .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .refresh-btn:active { transform: rotate(180deg); }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+
+  <header>
+    <div class="logo">🌍</div>
+    <h1>Flagium</h1>
+  </header>
+
+  <div class="main">
+    <!-- Loading -->
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <span class="loading-text">Resolving host…</span>
+    </div>
+
+    <!-- Error -->
+    <div class="error hidden" id="error">
+      <div class="error-icon">🚫</div>
+      <div class="error-title">No data</div>
+      <div class="error-msg" id="error-msg">Open an HTTP/HTTPS page</div>
+      <pre class="error-detail hidden" id="error-detail"></pre>
+    </div>
+
+    <!-- Result -->
+    <div class="hidden" id="result">
+      <div class="flag-row">
+        <div class="flag-emoji" id="flag-emoji">🌐</div>
+        <div class="country-info">
+          <div class="country-name" id="country-name">
+            Unknown
+            <span class="cc-badge" id="country-code">??</span>
+          </div>
+          <div class="city-name" id="city-name">—</div>
+        </div>
+      </div>
+
+      <div class="cards">
+        <div class="card">
+          <span class="card-icon">🖥</span>
+          <div class="card-content">
+            <div class="card-label">IP Address</div>
+            <div class="card-value" id="ip-value">—</div>
+          </div>
+          <button class="card-copy" title="Copy" data-copy="ip-value">⎘</button>
+        </div>
+
+        <div class="card">
+          <span class="card-icon">🏢</span>
+          <div class="card-content">
+            <div class="card-label">Organization / ISP</div>
+            <div class="card-value" id="org-value">—</div>
+          </div>
+          <button class="card-copy" title="Copy" data-copy="org-value">⎘</button>
+        </div>
+
+        <div class="card">
+          <span class="card-icon">🌐</span>
+          <div class="card-content">
+            <div class="card-label">Hostname</div>
+            <div class="card-value" id="host-value">—</div>
+          </div>
+          <button class="card-copy" title="Copy" data-copy="host-value">⎘</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span class="footer-hostname" id="footer-host">—</span>
+    <button class="refresh-btn" id="refresh-btn">↻ Refresh</button>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>
