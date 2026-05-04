@@ -52,3 +52,5 @@ Uses free public services:
 **License**: GPL-3.0
 
 Made with ❤️ for developers and power users.
+## For donations
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/V7V61YY60F)
