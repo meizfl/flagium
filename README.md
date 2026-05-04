@@ -33,7 +33,7 @@ Modern alternative to the classic FlagFox extension. Shows the country flag of t
 ### API Usage
 
 Uses free public services:
-- `iget.geojs.io` — primary GeoIP
+- `get.geojs.io` — primary GeoIP
 - Cloudflare DNS-over-HTTPS — fallback resolver
 
 ### Permissions
