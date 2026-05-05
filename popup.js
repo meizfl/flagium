@@ -2,8 +2,7 @@
 
 function toFlagEmoji(code) {
   if (!code || code.length !== 2) return "🌐";
-  const o = 127397;
-  const u = code.toUpperCase();
+  const o = 127397, u = code.toUpperCase();
   return String.fromCodePoint(u.charCodeAt(0) + o, u.charCodeAt(1) + o);
 }
 
@@ -19,12 +18,8 @@ function showError(msg, details) {
   document.getElementById("result").classList.add("hidden");
   document.getElementById("error-msg").textContent = msg || "Unknown error";
   const detailEl = document.getElementById("error-detail");
-  if (details?.length) {
-    detailEl.textContent = details.join("\n");
-    detailEl.classList.remove("hidden");
-  } else {
-    detailEl.classList.add("hidden");
-  }
+  if (details?.length) { detailEl.textContent = details.join("\n"); detailEl.classList.remove("hidden"); }
+  else detailEl.classList.add("hidden");
 }
 
 function showResult(info) {
@@ -43,6 +38,27 @@ function showResult(info) {
   document.getElementById("footer-host").textContent = info.hostname || "—";
 }
 
+// Держим порт открытым пока popup живёт — дополнительная защита от засыпания SW
+const _port = chrome.runtime.connect({ name: "popup-keepalive" });
+
+// Пингуем SW каждые 5 секунд пока popup открыт
+const _pingInterval = setInterval(() => {
+  chrome.runtime.sendMessage({ type: "PING" }, () => { void chrome.runtime.lastError; });
+}, 5000);
+
+window.addEventListener("unload", () => clearInterval(_pingInterval));
+
+function sendWithRetry(msg, callback, retries = 3) {
+  chrome.runtime.sendMessage(msg, (resp) => {
+    if (chrome.runtime.lastError) {
+      if (retries > 0) setTimeout(() => sendWithRetry(msg, callback, retries - 1), 300);
+      else callback(null, chrome.runtime.lastError.message);
+      return;
+    }
+    callback(resp, null);
+  });
+}
+
 async function loadInfo(forceRefresh = false) {
   showLoading();
 
@@ -52,27 +68,15 @@ async function loadInfo(forceRefresh = false) {
   let hostname;
   try {
     const u = new URL(tab.url);
-    if (u.protocol !== "http:" && u.protocol !== "https:") {
-      showError("Not an HTTP/HTTPS page");
-      return;
-    }
+    if (u.protocol !== "http:" && u.protocol !== "https:") { showError("Not an HTTP/HTTPS page"); return; }
     hostname = u.hostname;
-  } catch {
-    showError("Invalid URL");
-    return;
-  }
+  } catch { showError("Invalid URL"); return; }
 
   document.getElementById("footer-host").textContent = hostname;
 
-  chrome.runtime.sendMessage({ type: "LOOKUP", hostname, forceRefresh }, (resp) => {
-    if (chrome.runtime.lastError) {
-      showError("Runtime error", [chrome.runtime.lastError.message]);
-      return;
-    }
-    if (!resp?.ok) {
-      showError(resp?.error || "Lookup failed", resp?.details);
-      return;
-    }
+  sendWithRetry({ type: "LOOKUP", hostname, forceRefresh }, (resp, err) => {
+    if (err) { showError("Runtime error", [err]); return; }
+    if (!resp?.ok) { showError(resp?.error || "Lookup failed", resp?.details); return; }
     showResult({ ...resp, hostname });
   });
 }
@@ -82,8 +86,7 @@ document.querySelectorAll(".card-copy").forEach(btn => {
     const val = document.getElementById(btn.dataset.copy)?.textContent?.trim();
     if (!val || val === "—") return;
     await navigator.clipboard.writeText(val);
-    btn.textContent = "✓";
-    btn.classList.add("copied");
+    btn.textContent = "✓"; btn.classList.add("copied");
     setTimeout(() => { btn.textContent = "⎘"; btn.classList.remove("copied"); }, 1500);
   });
 });
