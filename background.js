@@ -5,11 +5,11 @@ const cache = new Map(); // hostname → info (in-memory)
 const tabData = new Map(); // tabId → {ip, hostname}
 
 // ==================== KEEPALIVE ====================
-// SW в MV3 убивается через ~30с. Будим его каждые 10с через alarm.
-chrome.alarms.create("sw-keepalive", { periodInMinutes: 1/6 }); // каждые 10 секунд
+// SW in MV3 is killed after ~30s. We wake him up every 10 seconds via alarm.
+chrome.alarms.create("sw-keepalive", { periodInMinutes: 1/6 }); // every 10 seconds
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === "sw-keepalive") {
-    // Просто просыпаемся. Ничего делать не надо.
+    // Just wake up. No need to do anything.
   }
 });
 
@@ -158,5 +158,5 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 // ==================== KEEPALIVE PORT ====================
 chrome.runtime.onConnect.addListener((port) => {
-  // порт от popup — пока открыт, SW не засыпает
+  // port from popup - while open, SW does not go to sleep
 });

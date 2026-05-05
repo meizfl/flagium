@@ -38,10 +38,10 @@ function showResult(info) {
   document.getElementById("footer-host").textContent = info.hostname || "—";
 }
 
-// Держим порт открытым пока popup живёт — дополнительная защита от засыпания SW
+// Keep the port open while the popup is alive - additional protection against SW falling asleep
 const _port = chrome.runtime.connect({ name: "popup-keepalive" });
 
-// Пингуем SW каждые 5 секунд пока popup открыт
+// Ping SW every 5 seconds while the popup is open
 const _pingInterval = setInterval(() => {
   chrome.runtime.sendMessage({ type: "PING" }, () => { void chrome.runtime.lastError; });
 }, 5000);
