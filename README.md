@@ -20,15 +20,10 @@ Modern alternative to the classic FlagFox extension. Shows the country flag of t
 ### Installation
 
 #### Chrome / Edge / Brave / etc.
-1. Download or clone this repository
-2. Go to `chrome://extensions/`
-3. Enable **Developer mode**
-4. Click **"Load unpacked"** and select the `flagium` folder
+Go to https://chromewebstore.google.com/detail/flagium/kklifcgkdgkbfhigndfcnppchbpdmddk
 
 #### Firefox
-1. Go to `about:debugging#/runtime/this-firefox`
-2. Click **"Load Temporary Add-on"**
-3. Select `manifest.json`
+Go to https://addons.mozilla.org/uk/firefox/addon/flagium/
 
 ### API Usage
 
